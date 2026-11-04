@@ -1,0 +1,10 @@
+{
+  "appId": "ge.lab.pdfreader",
+  "appName": "Folio for Android",
+  "webDir": "../dist",
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  }
+}

@@ -1,5 +1,10 @@
 # Folio
 
+> **Folio for Android** — this fork adds an Android version (`mobile/`), built with Capacitor from the same reader
+> code, with the original author's permission. Download the APK from [Releases](../../releases); build notes in
+> [mobile/README.md](mobile/README.md). Everything below is the upstream desktop README.
+
+
 A fast, clean PDF reader for Windows, macOS, and Linux. Read, highlight, annotate, sign, and ask AI about your
 documents. Free and open source, with no Folio account required.
 

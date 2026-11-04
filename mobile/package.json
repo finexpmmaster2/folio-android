@@ -1,0 +1,21 @@
+{
+  "name": "folio-android",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Folio for Android: the Folio PDF reader packaged with Capacitor",
+  "scripts": {
+    "build:web": "cd .. && npm run build",
+    "sync": "npm run build:web && npx cap sync android",
+    "eas-build-pre-install": "bash scripts/eas-jdk21.sh",
+    "eas-build-post-install": "bash scripts/eas-web-sync.sh"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.6.0",
+    "@capacitor/core": "8.6.0",
+    "@capacitor/filesystem": "8.1.5",
+    "@capacitor/share": "8.0.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.6.0"
+  }
+}

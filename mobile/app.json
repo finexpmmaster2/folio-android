@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "Folio for Android",
+    "slug": "pdf-reader-android",
+    "owner": "autophotos-team",
+    "version": "0.1.2",
+    "android": {
+      "package": "ge.lab.pdfreader",
+      "versionCode": 3
+    },
+    "extra": {
+      "eas": {
+        "projectId": "9438144d-e48e-4a34-9e0b-69c3f680bae5"
+      }
+    }
+  }
+}

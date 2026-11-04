@@ -1,4 +1,5 @@
 import { activeDocument, setActiveDocument } from "./session";
+import { onNativeOpen } from "./native";
 import { getRecent } from "./recent";
 
 export type OpenSource =
@@ -183,6 +184,7 @@ export class DocumentTabs {
       if (token && key) { conversions.delete(token); this.finishConversion(key, source); }
       else this.open([source]);
     });
+    onNativeOpen((name, data) => this.open([{ kind: "bytes", name, data }]));  // Android "Open with" / share
     desktop?.onOpenFailed((message, token) => {
       const key = conversions.get(token);
       if (key) { conversions.delete(token); this.finishConversion(key, { kind: "error", name: "", message }); }

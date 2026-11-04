@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
+import { isNative, nativeSave } from "./native";
 import {
   EventBus,
   LinkTarget,
@@ -119,6 +120,10 @@ interface Pending {
 const pdfBlob = (bytes: Uint8Array) => new Blob([bytes as Uint8Array<ArrayBuffer>], { type: "application/pdf" });
 
 function saveBlob(blob: Blob, name: string) {
+  if (isNative) {  // Android app: share sheet instead of a browser download
+    void nativeSave(blob, name).catch((e) => alert(`Couldn't save: ${e?.message ?? e}`));
+    return;
+  }
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -333,7 +338,41 @@ export default function App({ tabs, tabKey, upgradeNotes }: { tabs: DocumentTabs
       });
     };
     container.addEventListener("wheel", onWheel, { passive: false });
-    return () => { stopDrawingPointer(); container.removeEventListener("wheel", onWheel); };
+
+    // Phones (PDF Reader for Android, 2026-11-04): two-finger pinch zooms the document around the fingers.
+    let pinch: { d: number } | null = null;
+    const spread = (t: TouchList) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) pinch = { d: spread(e.touches) };
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      if (!pinch || e.touches.length !== 2 || !viewer.pdfDocument) return;
+      e.preventDefault();
+      const d = spread(e.touches);
+      const factor = d / pinch.d;
+      if (Math.abs(factor - 1) < 0.03) return;
+      pinch.d = d;
+      viewer.updateScale({
+        drawingDelay: 250,
+        scaleFactor: factor,
+        origin: [(e.touches[0].clientX + e.touches[1].clientX) / 2, (e.touches[0].clientY + e.touches[1].clientY) / 2],
+      });
+    };
+    const onTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length < 2) pinch = null;
+    };
+    container.addEventListener("touchstart", onTouchStart, { passive: true });
+    container.addEventListener("touchmove", onTouchMove, { passive: false });
+    container.addEventListener("touchend", onTouchEnd);
+    container.addEventListener("touchcancel", onTouchEnd);
+    return () => {
+      stopDrawingPointer();
+      container.removeEventListener("wheel", onWheel);
+      container.removeEventListener("touchstart", onTouchStart);
+      container.removeEventListener("touchmove", onTouchMove);
+      container.removeEventListener("touchend", onTouchEnd);
+      container.removeEventListener("touchcancel", onTouchEnd);
+    };
   }, []);
 
   useEffect(() => {
@@ -1234,7 +1273,7 @@ export default function App({ tabs, tabKey, upgradeNotes }: { tabs: DocumentTabs
         <div className="topbar-right">
           {doc && (
             <>
-              <IconButton icon="sparkle" label="Ask AI" active={aiOpen} onClick={() => { setHistoryOpen(false); setAiOpen(!aiOpen); }} />
+              {!isNative && <IconButton icon="sparkle" label="Ask AI" active={aiOpen} onClick={() => { setHistoryOpen(false); setAiOpen(!aiOpen); }} />}
               <IconButton icon="search" label={keys("Search (Ctrl+F)")} active={searchOpen} onClick={() => (searchOpen ? closeSearch() : setSearchOpen(true))} />
             </>
           )}
@@ -1247,7 +1286,7 @@ export default function App({ tabs, tabKey, upgradeNotes }: { tabs: DocumentTabs
                     { kind: "divider" },
                     { kind: "action", icon: "download", label: "Save a copy", shortcut: keys("Ctrl S"), onSelect: download },
                     { kind: "action", icon: "history", label: "Version history", onSelect: () => { setAiOpen(false); setHistoryOpen(true); } },
-                    { kind: "action", icon: "print", label: "Print", shortcut: keys("Ctrl P"), onSelect: print },
+                    ...(isNative ? [] : [{ kind: "action", icon: "print", label: "Print", shortcut: keys("Ctrl P"), onSelect: print } as MoreItem]),
                     { kind: "action", icon: "info", label: "Document info", onSelect: () => setDialog("info") },
                     { kind: "divider" },
                     { kind: "toggle", icon: "moon", label: "PDF dark mode", checked: night, onSelect: () => setNightTo(!night) },
@@ -1255,7 +1294,7 @@ export default function App({ tabs, tabKey, upgradeNotes }: { tabs: DocumentTabs
                   ] as MoreItem[])
                 : []),
               { kind: "action", icon: "settings", label: "Settings", shortcut: keys("Ctrl ,"), onSelect: () => setDialog("settings") },
-              { kind: "action", icon: "keyboard", label: "Keyboard shortcuts", shortcut: "?", onSelect: () => setDialog("shortcuts") },
+              ...(isNative ? [] : [{ kind: "action", icon: "keyboard", label: "Keyboard shortcuts", shortcut: "?", onSelect: () => setDialog("shortcuts") } as MoreItem]),
               { kind: "action", icon: "info", label: "About Folio", onSelect: () => setDialog("about") },
             ]}
           />

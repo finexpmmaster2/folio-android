@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Folio for Android</string>
+    <string name="title_activity_main">Folio for Android</string>
+    <string name="package_name">ge.lab.pdfreader</string>
+    <string name="custom_url_scheme">ge.lab.pdfreader</string>
+</resources>
